@@ -1,0 +1,24 @@
+# Ignorar archivos y carpetas generadas por el sistema operativo
+.DS_Store
+Thumbs.db
+
+# Ignorar archivos y carpetas generados por el editor de código
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Ignorar archivos y carpetas generados por herramientas de construcción y dependencias
+node_modules/
+dist/
+build/
+
+# Ignorar archivos de configuración y claves secretas
+backend/config/config.py
+venv/
+*.env
+*.pem
+
+
+
+
