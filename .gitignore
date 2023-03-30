@@ -12,13 +12,14 @@ Thumbs.db
 node_modules/
 dist/
 build/
+requirements.txt
 
 # Ignorar archivos de configuración y claves secretas
 backend/config/config.py
 venv/
 *.env
 *.pem
-
+*.c-venv
 
 
 
