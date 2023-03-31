@@ -17,9 +17,9 @@ requirements.txt
 # Ignorar archivos de configuración y claves secretas
 backend/config/config.py
 venv/
+c-venv/
 *.env
 *.pem
-*.c-venv
 
 
 
