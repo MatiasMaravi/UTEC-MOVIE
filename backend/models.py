@@ -1,11 +1,23 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
+import os
+from dotenv import load_dotenv
+
+# Cargar las variables de entorno desde el archivo .env
+load_dotenv()
+
+class Config:
+    # Obtener la clave secreta de la variable de entorno SECRET_KEY
+    SECRET_KEY = os.getenv('SECRET_KEY')
+    # Obtener la URI de la base de datos de la variable de entorno DATABASE_URI
+    DATABASE_URI = os.getenv('DATABASE_URI')
 
 db = SQLAlchemy()
-database_name="cloud_proyect"
-database_path="postgres://{}@{}/{}".format('jerimy:12345','localhost:5432', database_name)
+database_path=Config.DATABASE_URI
+#Ejemplo: DATABASE_URI=postgresql://postgres:123@localhost:5432/utecmovie2023
 # por el momento el database name lo trabajaremos en postgres.
+
 
 def setup_db(app, database_path=database_path):
     app.config["SQLALCHEMY_DATABASE_URI"] = database_path
@@ -17,7 +29,7 @@ def setup_db(app, database_path=database_path):
 
 
 
-class User(db.model):
+class User(db.Model):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
@@ -67,7 +79,8 @@ class User(db.model):
             db.session.close()
 #fijarse en la clase movie, cambie gnere por gneres, ya que es una relacion de muchos a muchos.
 #Matias coloco gnere, pero no se si sea correcto.
-class Movie(db.model):
+#Si es correcto porque hace referencia al modelo en sí.
+class Movie(db.Model):
     __tablename__ = "movies"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
@@ -75,7 +88,7 @@ class Movie(db.model):
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     owner = relationship("User", back_populates="movies")
-    genres = relationship("Genres", back_populates="movies")
+    genres = relationship("Genre", back_populates="movies")
     def __repr__(self):
         return f"Movie: id: {self.id}, title: {self.title}, genre_id: {self.genre_id} , owner_id: {self.owner_id}, owner: {self.owner} ,genres: {self.genres}"
     def insert(self):
@@ -110,7 +123,7 @@ class Movie(db.model):
             db.session.close()
 
 #Cambiar owner por director
-class Genre(db.model):
+class Genre(db.Model):
     __tablename__ = "genres"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
@@ -148,7 +161,7 @@ class Genre(db.model):
         finally:
             db.session.close()
 
-class Actor(db.model):
+class Actor(db.Model):
     __tablename__ = "actors"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
@@ -187,7 +200,7 @@ class Actor(db.model):
         finally:
             db.session.close()
 
-class Credits(db.model):
+class Credits(db.Model):
     __tablename__ = "credits"
     id = Column(Integer, primary_key=True, index=True)
     actor_id = Column(Integer, ForeignKey("actors.id"))
@@ -228,7 +241,7 @@ class Credits(db.model):
         finally:
             db.session.close()
 
-class Director(db.model):
+class Director(db.Model):
     __tablename__ = "directors"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
