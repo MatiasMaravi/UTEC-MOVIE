@@ -19,6 +19,6 @@ venv/
 *.env
 *.pem
 __pycache__
-
+cloud-venv/
 
 
