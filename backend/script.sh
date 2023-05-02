@@ -1,3 +1,3 @@
-$env:FLASK_APP="app"
-$env:FLASK_DEBUG="true"
+export FLASK_APP="app"
+export FLASK_DEBUG="true"
 flask run

@@ -4,12 +4,10 @@ from flask import (
     jsonify,
     request,
 )
+import jwt
+import datetime
 from flask_cors import CORS
-from models.__init__ import setup_db
-from models.user import User
-from models.movie import Movie
-from models.genre import Genre
-from models.director import Director
+from models import setup_db, Genre, Movie, Director, User
 def create_app(test_config=None):
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'utecuniversity'
@@ -17,34 +15,67 @@ def create_app(test_config=None):
     CORS(app, origins=['http://localhost:8080', 'http://localhost:8080'])
 
     @app.after_request
-    def after_request(response):
-        response.headers.add('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+    def after_request(response):    
+        response.headers.add('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')#Para https
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, true')
         response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
         return response
+    @app.route('/register', methods=['POST'])
+    def register():
+        body = request.get_json()
+        username = body.get('username', None)
+        email = body.get('email', None)
+        password = body.get('password', None)
+
+        if email is None or username is None or password is None:
+            abort(422)
+
+        #Search
+        db_user = User.query.filter(User.username==username).first()
+        errors_to_send = []
+        if db_user is not None:
+            if db_user.username == username:
+                errors_to_send.append('An account with this username already exists')
+
+            if len(password) < 4:
+                errors_to_send.append('The length of the password is too short')
+
+            if len(errors_to_send) > 0:
+                return jsonify({
+                    'success': False,
+                    'code': 422,
+                    'messages': errors_to_send
+                }), 422
+
+        user = User(username=username, password=password,email=email)
+        new_user_id = user.insert()
+
+        token = jwt.encode({
+            'id': new_user_id,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+        }, app.config['SECRET_KEY'])
+
+        return jsonify({
+            'success': True,
+            'token': str(token),
+            'user_id': new_user_id
+        })
+    
     @app.route('/genres', methods=['GET'])
     def get_genres():
-        error_404= False
-        try:
-            genres= {genre.id: {'id': genre.id, 'name': genre.name} for genre in Genre.query.order_by('id').all()}
-            if len(genres) == 0:
-                error_404=True
-                raise Exception
-            return jsonify({
-                'success': True,
-                'genres': genres,
-                'length': len(genres)
-            }) 
-        except Exception as e:
-            if error_404:
-                abort(404)
-            else:
-                abort(500)
-    @app.route('/gnres', methods=['POST'])
+        genres= Genre.query.order_by('id').all()
+        total_generes = Genre.query.count()
+        if (total_generes == 0):
+            abort(404)
+        return jsonify({
+            'success': True,
+            'generes': [genere.format() for genere in genres],
+            'total_generes': total_generes  
+        })
+    @app.route('/genres', methods=['POST'])
     def create_genres():
         body = request.get_json()
         name = body.get('name', None)
-        movies = body.get('movie', None)
         search = body.get('search', None)
         if search:
             generes = Genre.order_by('id').filter(Genre.name.like('%{}%'.format(search))).all()
@@ -54,59 +85,72 @@ def create_app(test_config=None):
                 'total_generes': len(generes)
             })
         else:
-            if 'name' or 'movie' not in body:
+            if 'name' not in body:
                 abort(422)
             response = {}
             try:
-                genere=Genre(name=name, movies=movies)
+                genre = Genre(name=name)
                 response['success'] = True
-                genere_id = genere.insert()
-                genere.id = genere_id
-                response['genere'] = genere.format()
+                genere_id = genre.insert()
+                genre.id = genere_id
+                response['genre'] = genre.format()
+
             except Exception as e:
                 response['success'] = False
                 print(e)
                 abort(500)
             return jsonify(response)
-    @app.route('genres/<genere_id>', METHODS=['DELETE'])
-    def delete_genere(genere_id):
+    @app.route('/genres/<int_id>', methods=['DELETE'])
+    def delete_genres(int_id):
         error_404 = False
         try:
-            genere= Genre.query.get(genere_id)
-            if generes is None:
+            genre = Genre.query.get(int_id)
+            if genre is None:
                 error_404 = True
                 raise Exception
-            genere.delete()
+            genre.delete()
             return jsonify({
                 'success': True,
-                'deleted': genere_id,
-                'total_genres': Genre.query.count()
+                'delete': int_id,
+                'total_generes': Genre.query.count()
             })
         except Exception as e:
-            print(e)
             if error_404:
                 abort(404)
             else:
                 abort(500)
+    @app.route('/genres/<int_id>', methods=['PATCH'])
+    def update_genres(int_id):
+        response={}
+        status_code=500
+        try:
+            genre=Genre.query.get(int_id)
+            if genre is None:
+                status_code=404
+                raise Exception
+            body = request.get_json()
+            if 'name' in body:
+                genre.name = body.get('name')
+            response['success'] = True
+            response['genre'] = genre.format()
+            genre.update()
+        except Exception as e:
+            response['success'] = False
+            print(e)
+            abort(status_code)
+        return jsonify(response)
     #MOVIES
     @app.route('/movies', methods=['GET'])
     def get_movies():
-        error_404= False
-        try:
-            movies= {movie.id: {'id': movie.id,'title':movie.title,'genre_id':movie.genre_id,'owner_id':movie.owner_id} for movie in Movie.query.order_by('id').all()}
-            if len(movies) == 0:
-                error_404=True
-                raise Exception
-            return jsonify({
-                'success': True,
-                'movies': movies,
-                'length': len(movies)
-            }) 
-        except Exception as e:
-            if error_404:
-                abort(404)
-            else:
-                abort(500)
+        movies= Movie.query.order_by('id').all()
+        total_movies = Movie.query.count()
+        if (total_movies == 0):
+            abort(404)
+        return jsonify({
+            'success': True,
+            'movies': [movie.format() for movie in movies],
+            'total_movies': total_movies  
+        })
     @app.route('/movies', methods=['POST'])
     def create_movies():
         body = request.get_json()
@@ -122,40 +166,78 @@ def create_app(test_config=None):
                 'total_movies': len(movies)
             })
         else:
-            if 'title' or 'genre_id' or 'owner_id' not in body:
+            if 'title' not in body:
                 abort(422)
+            if 'genre_id' not in body:
+                abort(422)
+            if 'owner_id' not in body:
+                abort(422)
+
             response = {}
             try:
-                movie=Movie(title=title, genre_id=genre_id, owner_id=owner_id)
+                movies = Movie(title=title, genre_id=genre_id, owner_id=owner_id)
                 response['success'] = True
-                movie_id = movie.insert()
-                movie.id = movie_id
-                response['movie'] = movie.format()
+                movie_id = movies.insert()
+                movies.id = movie_id
+                response['movies'] = movies.format()
+
             except Exception as e:
                 response['success'] = False
                 print(e)
                 abort(500)
             return jsonify(response)
-    @app.route('movies/<movie_id>', METHODS=['DELETE'])
-    def delete_movie(movie_id):
+    @app.route('/movies/<int_id>', methods=['DELETE'])
+    def delete_movies(int_id):
         error_404 = False
         try:
-            movie= Movie.query.get(movie_id)
-            if movie is None:
+            movies = Movie.query.get(int_id)
+            if movies is None:
                 error_404 = True
                 raise Exception
-            movie.delete()
+            movies.delete()
             return jsonify({
                 'success': True,
-                'deleted': movie_id,
+                'delete': int_id,
                 'total_movies': Movie.query.count()
             })
         except Exception as e:
-            print(e)
             if error_404:
                 abort(404)
             else:
                 abort(500)
+    @app.route('/movies/<int_id>', methods=['PATCH'])
+    def update_movies(int_id):
+        response={}
+        status_code=500
+        try:
+            movies=Movie.query.get(int_id)
+            if movies is None:
+                status_code=404
+                raise Exception
+            body = request.get_json()
+            if 'title' in body:
+                movies.title = body.get('title')
+            if 'genre_id' in body:
+                exist_genre = Genre.query.get(body.get('genre_id'))
+                if exist_genre is None:
+                    status_code=409
+                    raise Exception
+                movies.genre_id = body.get('genre_id')
+            if 'owner_id' in body:
+                exist_owner = User.query.get(body.get('owner_id'))
+                if exist_owner is None:
+                    status_code=409
+                    raise Exception
+                movies.owner_id = body.get('owner_id')
+            response['success'] = True
+            response['movies'] = movies.format()
+            movies.update()
+        except Exception as e:
+            response['success'] = False
+            print(e)
+            abort(status_code)
+        return jsonify(response)
+    
     #----handling errorrs-----
     @app.errorhandler(404)
     def not_found(error):
