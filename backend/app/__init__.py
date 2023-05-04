@@ -26,27 +26,22 @@ def create_app(test_config=None):
         username = body.get('username', None)
         email = body.get('email', None)
         password = body.get('password', None)
-
         if email is None or username is None or password is None:
             abort(422)
-
         #Search
         db_user = User.query.filter(User.username==username).first()
-        errors_to_send = []
         if db_user is not None:
-            if db_user.username == username:
-                errors_to_send.append('An account with this username already exists')
-
-            if len(password) < 4:
-                errors_to_send.append('The length of the password is too short')
-
-            if len(errors_to_send) > 0:
-                return jsonify({
-                    'success': False,
-                    'code': 422,
-                    'messages': errors_to_send
-                }), 422
-
+            return jsonify({
+                'success': False,
+                'code': 422,
+                'messages': 'An account with this username already exists'
+            }), 422
+        if len(str(password)) < 4:
+            return jsonify({
+                'success': False,
+                'code': 422,
+                'messages': 'The length of the password is too short'
+            }), 422
         user = User(username=username, password=password,email=email)
         new_user_id = user.insert()
 
@@ -60,7 +55,7 @@ def create_app(test_config=None):
             'token': str(token),
             'user_id': new_user_id
         })
-    
+    #GENRES
     @app.route('/genres', methods=['GET'])
     def get_genres():
         genres= Genre.query.order_by('id').all()
