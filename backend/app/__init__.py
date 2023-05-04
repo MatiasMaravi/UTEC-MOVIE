@@ -73,12 +73,11 @@ def create_app(test_config=None):
         name = body.get('name', None)
         search = body.get('search', None)
         if search:
-            generes = Genre.order_by('id').filter(Genre.name.like('%{}%'.format(search))).all()
+            generes = Genre.order_by('id').filter(Genre.name.like(f'%{search}%')).all()
             return jsonify({
                 'success': True,
                 'generes': [genere.format() for genere in generes],
-                'total_generes': len(generes)
-            })
+                'total_generes': len(generes)})
         else:
             if 'name' not in body:
                 abort(422)
@@ -86,10 +85,8 @@ def create_app(test_config=None):
             try:
                 genre = Genre(name=name)
                 response['success'] = True
-                genere_id = genre.insert()
-                genre.id = genere_id
+                genre.id = genre.insert()
                 response['genre'] = genre.format()
-
             except Exception as e:
                 response['success'] = False
                 print(e)
