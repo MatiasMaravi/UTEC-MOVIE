@@ -55,6 +55,46 @@ def create_app(test_config=None):
             'token': str(token),
             'user_id': new_user_id
         })
+    @app.route('/login', methods=['POST'])
+    def login():
+        body = request.get_json()
+        username = body.get('username', None)
+        password = body.get('password', None)
+        if username is None or password is None:
+            abort(422)
+        user = User.query.filter(User.username==username).first()
+        if user is None:
+            return jsonify({
+                'success': False,
+                'code': 404,
+                'messages': 'User not found'
+            }), 404
+        if user.password != password:
+            return jsonify({
+                'success': False,
+                'code': 422,
+                'messages': 'Incorrect password'
+            }), 422
+        token = jwt.encode({
+            'id': user.id,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+        }, app.config['SECRET_KEY'])
+        return jsonify({
+            'success': True,
+            'token': str(token),
+            'user_id': user.id
+        })
+    @app.route('/users', methods=['GET'])
+    def get_users():
+        users= User.query.order_by('id').all()
+        total_users = User.query.count()
+        if (total_users == 0):
+            abort(404)
+        return jsonify({
+            'success': True,
+            'users': [user.format() for user in users],
+            'total_users': total_users  
+        })
     #GENRES
     @app.route('/genres', methods=['GET'])
     def get_genres():
@@ -151,7 +191,7 @@ def create_app(test_config=None):
         owner_id = body.get('owner_id', None)
         search = body.get('search', None)
         if search:
-            movies = Movie.order_by('id').filter(Movie.title.like('%{}%'.format(search))).all()
+            movies = Movie.order_by('id').filter(Movie.title.like(f'%{search}%')).all()
             return jsonify({
                 'success': True,
                 'movies': [movie.format() for movie in movies],
@@ -169,10 +209,8 @@ def create_app(test_config=None):
             try:
                 movies = Movie(title=title, genre_id=genre_id, owner_id=owner_id)
                 response['success'] = True
-                movie_id = movies.insert()
-                movies.id = movie_id
+                movies.id = movies.insert()
                 response['movies'] = movies.format()
-
             except Exception as e:
                 response['success'] = False
                 print(e)
@@ -180,11 +218,11 @@ def create_app(test_config=None):
             return jsonify(response)
     @app.route('/movies/<int_id>', methods=['DELETE'])
     def delete_movies(int_id):
-        error_404 = False
+        status_code = 500
         try:
             movies = Movie.query.get(int_id)
             if movies is None:
-                error_404 = True
+                status_code = 404
                 raise Exception
             movies.delete()
             return jsonify({
@@ -193,10 +231,8 @@ def create_app(test_config=None):
                 'total_movies': Movie.query.count()
             })
         except Exception as e:
-            if error_404:
-                abort(404)
-            else:
-                abort(500)
+            print(e)
+            abort(status_code)
     @app.route('/movies/<int_id>', methods=['PATCH'])
     def update_movies(int_id):
         response={}
