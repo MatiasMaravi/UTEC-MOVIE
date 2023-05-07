@@ -7,7 +7,7 @@ from flask import (
 import jwt
 import datetime
 from flask_cors import CORS
-from models import setup_db, Genre, Movie, Director, User
+from models import setup_db, Genre, Movie, Director, User, Is_Favorite
 def create_app(test_config=None):
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'utecuniversity'
@@ -188,8 +188,8 @@ def create_app(test_config=None):
         body = request.get_json()
         title = body.get('title', None)
         genre_id = body.get('genre_id', None)
-        owner_id = body.get('owner_id', None)
         search = body.get('search', None)
+        
         if search:
             movies = Movie.order_by('id').filter(Movie.title.like(f'%{search}%')).all()
             return jsonify({
@@ -197,25 +197,28 @@ def create_app(test_config=None):
                 'movies': [movie.format() for movie in movies],
                 'total_movies': len(movies)
             })
-        else:
-            if 'title' not in body:
-                abort(422)
-            if 'genre_id' not in body:
-                abort(422)
-            if 'owner_id' not in body:
-                abort(422)
-
-            response = {}
+        
+        elif title and genre_id:
+            # Comprobamos si la película ya existe
+            existing_movie = Movie.query.filter_by(title=title, genre_id=genre_id).first()
+            if existing_movie:
+                abort(409, 'La película ya existe.')
+            
+            # Si la película no existe, la agregamos
             try:
-                movies = Movie(title=title, genre_id=genre_id, owner_id=owner_id)
-                response['success'] = True
-                movies.id = movies.insert()
-                response['movies'] = movies.format()
-            except Exception as e:
-                response['success'] = False
-                print(e)
+                movie = Movie(title=title, genre_id=genre_id)
+                movie.insert()
+                response = {
+                    'success': True,
+                    'movies': movie.format()
+                }
+            except:
                 abort(500)
-            return jsonify(response)
+        else:
+            abort(422)
+            
+        return jsonify(response)
+
     @app.route('/movies/<int_id>', methods=['DELETE'])
     def delete_movies(int_id):
         status_code = 500
@@ -251,12 +254,6 @@ def create_app(test_config=None):
                     status_code=409
                     raise Exception
                 movies.genre_id = body.get('genre_id')
-            if 'owner_id' in body:
-                exist_owner = User.query.get(body.get('owner_id'))
-                if exist_owner is None:
-                    status_code=409
-                    raise Exception
-                movies.owner_id = body.get('owner_id')
             response['success'] = True
             response['movies'] = movies.format()
             movies.update()
@@ -265,7 +262,62 @@ def create_app(test_config=None):
             print(e)
             abort(status_code)
         return jsonify(response)
-    
+    #Is_Favorite
+    @app.route('/users/<user_id>/favorites', methods=['GET'])
+    def get_favorites(user_id):
+        favorites = Is_Favorite.query.filter_by(user_id=user_id).all()
+        if len(favorites) == 0:
+            abort(404)
+        return jsonify({
+            'success': True,
+            'favorites': [favorite.format() for favorite in favorites],
+            'total_favorites': len(favorites)
+        })
+    @app.route('/users/<user_id>/favorites', methods=['POST'])
+    def create_favorite(user_id):
+        body = request.get_json()
+        movie_id = body.get('movie_id', None)
+        if 'movie_id' not in body:
+            abort(422)
+
+        # Verificar si la película ya existe como favorita del usuario
+        is_favorite = Is_Favorite.query.filter_by(user_id=user_id, movie_id=movie_id).first()
+        if is_favorite:
+            return jsonify({
+                'success': False,
+                'error': 'La película ya está en la lista de favoritos del usuario'
+            }), 422
+
+        response = {}
+        try:
+            is_favorite = Is_Favorite(movie_id=movie_id, user_id=user_id)
+            response['success'] = True
+            is_favorite.id = is_favorite.insert()
+            response['is_favorite'] = is_favorite.format()
+        except Exception as e:
+            response['success'] = False
+            print(e)
+            abort(500)
+        return jsonify(response)
+
+
+    @app.route('/users/<user_id>/favorites/<movie_id>', methods=['DELETE'])
+    def delete_favorite(user_id, movie_id):
+        status_code = 500
+        try:
+            is_favorite = Is_Favorite.query.filter_by(user_id=user_id, movie_id=movie_id).one_or_none()
+            if is_favorite is None:
+                status_code = 404
+                raise Exception
+            is_favorite.delete()
+            return jsonify({
+                'success': True,
+                'delete': movie_id,
+            })
+        except Exception as e:
+            print(e)
+            abort(status_code)
+
     #----handling errorrs-----
     @app.errorhandler(404)
     def not_found(error):

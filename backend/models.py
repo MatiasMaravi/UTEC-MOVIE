@@ -164,18 +164,16 @@ class Movie(db.Model):
     id = db.Column(db.Integer, primary_key=True, index=True)
     title = db.Column(db.String, index=True)
     genre_id = db.Column(db.Integer, db.ForeignKey("genres.id"))
-    owner_id = db.Column(db.Integer, db.ForeignKey("users.id"))
 
-    owner = db.relationship("User", back_populates="movies")
     genres = db.relationship("Genre", back_populates="movies")
+    is_favorite = db.relationship("Is_Favorite", back_populates="movie")
     def __repr__(self):
-        return f"Movie: id: {self.id}, title: {self.title}, genre_id: {self.genre_id} , owner_id: {self.owner_id}, owner: {self.owner} ,genres: {self.genres}"
+        return f"Movie: id: {self.id}, title: {self.title}, genre_id: {self.genre_id},genres: {self.genres}"
     def format(self):
         return {
             'id': self.id,
             'title': self.title,
             'genre_id': self.genre_id,
-            'owner_id': self.owner_id
         }
     def insert(self):
         try:
@@ -213,7 +211,7 @@ class User(db.Model):
     username = db.Column(db.String, unique=True, index=True)
     email = db.Column(db.String, unique=True, index=True)
     password = db.Column(db.String)
-    movies = db.relationship("Movie", back_populates="owner")
+    is_favorite = db.relationship("Is_Favorite", back_populates="user")
 
     def __repr__(self):
         return f"User: id: {self.id}, username: {self.username}, email: {self.email} , password: {self.password}"
@@ -234,6 +232,53 @@ class User(db.Model):
         finally:
             db.session.close()
         return create_user
+    
+    def update(self):
+        error= False
+        try:
+            print('self: ',self)
+            db.session.commit()
+        except Exception as e:
+            print('error: ',e)
+            error= True
+            db.session.rollback()
+        finally:
+            db.session.close()
+        return error
+    def delete(self):
+        try:
+            db.session.delete(self)
+            db.session.commit()
+        except:
+            db.session.rollback()
+        finally:
+            db.session.close()
+
+class Is_Favorite(db.Model):
+    __tablename__ = "is_favorite"
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    movie_id = db.Column(db.Integer, db.ForeignKey("movies.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    movie = db.relationship("Movie", back_populates="is_favorite")
+    user = db.relationship("User", back_populates="is_favorite")
+    def __repr__(self):
+        return f"Is_Favorite: id: {self.id}, movie_id: {self.movie_id}, user_id: {self.user_id} , movie: {self.movie} , user: {self.user}"
+    def format(self):
+        return {
+            "id": self.id,
+            "movie_id": self.movie_id,
+            "user_id": self.user_id,
+        }
+    def insert(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+            create_is_favorite = self.id
+        except:
+            db.session.rollback()
+        finally:
+            db.session.close()
+        return create_is_favorite
     
     def update(self):
         error= False
