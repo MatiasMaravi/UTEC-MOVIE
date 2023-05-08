@@ -1,10 +1,10 @@
 <script>
 export default {
-  name: "HelloWorld",
+  name: 'HelloWorld',
   props: {
     msg: String,
   },
-};
+}
 </script>
 
 <template>
@@ -30,6 +30,7 @@ h3 {
 .greetings h1,
 .greetings h3 {
   text-align: center;
+  color: #000;
 }
 
 @media (min-width: 1024px) {
@@ -37,5 +38,9 @@ h3 {
   .greetings h3 {
     text-align: left;
   }
+}
+
+body {
+  background: #fff;
 }
 </style>
