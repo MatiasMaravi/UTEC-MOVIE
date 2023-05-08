@@ -1,30 +1,34 @@
 <script>
 export default {
-  name: "CountryComponent",
+  name: 'CountryComponent',
   props: [
-    "name",
-    "capital",
-    "currency_name",
-    "currency",
-    "region",
-    "code",
+    'name',
+    'capital',
+    'currency_name',
+    'currency',
+    'region',
+    'code',
     //TODO: crear una propiedad para determinar si al componente se le puede hacer click
-    "clickable"
+    'clickable',
   ],
   methods: {
     handleClick() {
       if (this.clickable) {
-        this.$router.push({path: '/countries/' + this.code})
+        this.$router.push({ path: '/countries/' + this.code })
       }
-    }
-  }
-};
+    },
+  },
+}
 </script>
 
 <template>
   <!--TODO: Utilizar la propiedad creada para controlar el click. Cuando el componente es "clickeable", redirigir a la pagina del pais.
   Mira las rutas para ver como redirigir al usuario.-->
-  <div class="country" :class="{'country-hover': clickable}" @click="handleClick">
+  <div
+    class="country"
+    :class="{ 'country-hover': clickable }"
+    @click="handleClick"
+  >
     <!--TODO: Poblar el HTML con las propiedades. Usar https://countryflagsapi.com/png/${code}-->
     <img
       src="https://countryflagsapi.com/png/${code}"

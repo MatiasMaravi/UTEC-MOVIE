@@ -1,9 +1,9 @@
 <script>
 export default {
-  name: "HomeView",
-};
+  name: 'HomeView',
+}
 </script>
 
-<template>
-  <h1>Hola Mundo!</h1>
-</template>
+<template></template>
+
+<style></style>
