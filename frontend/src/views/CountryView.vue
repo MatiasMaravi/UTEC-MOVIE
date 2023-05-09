@@ -19,39 +19,49 @@ export default {
 </script>
 
 <template>
-  <div class="country">
-    <!--TODO: Poblar el HTML con las propiedades. Usar https://countryflagsapi.com para la bandera-->
-    <div class="nombre">
-      {{country.name}}
-    </div>
-    <img
-      width="400"
-      height="400"
-      src="https://countryflagsapi.com/png/${country.numeric_code}"
-    />
-    <h2> Capital: {{ country.capital }} </h2>
-    <h3> Moneda: {{ country.currency_name }} ({{ country.currency }}) </h3>
-    <h3> Región: {{ country.region }} </h3>
-    <div class="traducciones">
-      <h2>Traducciones</h2>
-      <h3
-        v-for="(translation, index) in Object.keys(country.translations)"
-        :key="index"
-      >
-        {{ `${translation}: ${country.translations[translation]}` }}
-      </h3>
+  <div class="info">
+    <img width="400" height="400" src="https://countryflagsapi.com/png/${country.numeric_code}" class="poster">
+    <div>
+      <h2>{{ country.name }}</h2>
+      <div class="details">
+        <span>Capital: {{ country.capital }}</span>
+        <span>Moneda: {{ country.currency_name }} ({{ country.currency }})</span>
+        <span>Región: {{ country.region }}</span>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/*
 .country {
-  font-size: large;
+  position: relative;
+  display: grid;
+  grid-template-columns: 4fr 8fr;
+  margin-top: 1.2em;
 }
-
+*/
 @media (min-width: 1024px) {
 }
 
+.info{
+    position: relative;
+    display: grid;
+    grid-template-columns: 4fr 8fr;
+    margin-top: 1.2em;
+}
+
+.poster{
+    width: 100%;
+}
+
+h2{
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+}
+/*
 .traducciones {
   color: white;
   display: grid;
@@ -59,5 +69,5 @@ export default {
 
 .nombre {
   font-size: 50px;
-}
+}*/
 </style>
