@@ -1,0 +1,15 @@
+ version: "3.3"
+
+ services:
+   api-genres:
+     image: matiasmaravi/api-genres:1.0
+     ports:
+       - 8081:80
+   api-movies:
+     image: matiasmaravi/api-movies:1.0
+     ports:
+       - 8082:80
+   api-users:
+     image: matiasmaravi/api-users:1.0
+     ports:
+       - 8083:80
