@@ -7,7 +7,8 @@ from flask import (
 import jwt
 import datetime
 from flask_cors import CORS
-from m import setup_db, Genre, Movie, Director, User, Is_Favorite
+from .models import setup_db, User, Is_Favorite
+
 def create_app(test_config=None):
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'utecuniversity'
@@ -95,174 +96,6 @@ def create_app(test_config=None):
             'users': [user.format() for user in users],
             'total_users': total_users  
         })
-    #GENRES
-    @app.route('/genres', methods=['GET'])
-    def get_genres():
-        genres= Genre.query.order_by('id').all()
-        total_generes = Genre.query.count()
-        if (total_generes == 0):
-            abort(404)
-        return jsonify({
-            'success': True,
-            'generes': [genere.format() for genere in genres],
-            'total_generes': total_generes  
-        })
-    @app.route('/genres', methods=['POST'])
-    def create_genres():
-        body = request.get_json()
-        name = body.get('name', None)
-        search = body.get('search', None)
-        if search:
-            generes = Genre.order_by('id').filter(Genre.name.like(f'%{search}%')).all()
-            return jsonify({
-                'success': True,
-                'generes': [genere.format() for genere in generes],
-                'total_generes': len(generes)})
-        else:
-            if 'name' not in body:
-                abort(422)
-            response = {}
-            try:
-                genre = Genre(name=name)
-                response['success'] = True
-                genre.id = genre.insert()
-                response['genre'] = genre.format()
-            except Exception as e:
-                response['success'] = False
-                print(e)
-                abort(500)
-            return jsonify(response)
-    @app.route('/genres/<int_id>', methods=['DELETE'])
-    def delete_genres(int_id):
-        error_404 = False
-        try:
-            genre = Genre.query.get(int_id)
-            if genre is None:
-                error_404 = True
-                raise Exception
-            genre.delete()
-            return jsonify({
-                'success': True,
-                'delete': int_id,
-                'total_generes': Genre.query.count()
-            })
-        except Exception as e:
-            if error_404:
-                abort(404)
-            else:
-                abort(500)
-    @app.route('/genres/<int_id>', methods=['PATCH'])
-    def update_genres(int_id):
-        response={}
-        status_code=500
-        try:
-            genre=Genre.query.get(int_id)
-            if genre is None:
-                status_code=404
-                raise Exception
-            body = request.get_json()
-            if 'name' in body:
-                genre.name = body.get('name')
-            response['success'] = True
-            response['genre'] = genre.format()
-            genre.update()
-        except Exception as e:
-            response['success'] = False
-            print(e)
-            abort(status_code)
-        return jsonify(response)
-    #MOVIES
-    @app.route('/movies', methods=['GET'])
-    def get_movies():
-        movies= Movie.query.order_by('id').all()
-        total_movies = Movie.query.count()
-        if (total_movies == 0):
-            abort(404)
-        return jsonify({
-            'success': True,
-            'movies': [movie.format() for movie in movies],
-            'total_movies': total_movies  
-        })
-    @app.route('/movies', methods=['POST'])
-    def create_movies():
-        body = request.get_json()
-        title = body.get('title', None)
-        genre_id = body.get('genre_id', None)
-        search = body.get('search', None)
-        
-        if search:
-            movies = Movie.order_by('id').filter(Movie.title.like(f'%{search}%')).all()
-            return jsonify({
-                'success': True,
-                'movies': [movie.format() for movie in movies],
-                'total_movies': len(movies)
-            })
-        
-        elif title and genre_id:
-            # Comprobamos si la película ya existe
-            existing_movie = Movie.query.filter_by(title=title, genre_id=genre_id).first()
-            if existing_movie:
-                abort(409, 'La película ya existe.')
-            
-            # Si la película no existe, la agregamos
-            try:
-                movie = Movie(title=title, genre_id=genre_id)
-                movie.insert()
-                response = {
-                    'success': True,
-                    'movies': movie.format()
-                }
-            except:
-                abort(500)
-        else:
-            abort(422)
-            
-        return jsonify(response)
-
-    @app.route('/movies/<int_id>', methods=['DELETE'])
-    def delete_movies(int_id):
-        status_code = 500
-        try:
-            movies = Movie.query.get(int_id)
-            if movies is None:
-                status_code = 404
-                raise Exception
-            movies.delete()
-            return jsonify({
-                'success': True,
-                'delete': int_id,
-                'total_movies': Movie.query.count()
-            })
-        except Exception as e:
-            print(e)
-            abort(status_code)
-    @app.route('/movies/<int_id>', methods=['PATCH'])
-    def update_movies(int_id):
-        response={}
-        status_code=500
-        try:
-            movies=Movie.query.get(int_id)
-            if movies is None:
-                status_code=404
-                raise Exception
-            body = request.get_json()
-            if 'title' in body:
-                movies.title = body.get('title')
-            if 'genre_id' in body:
-                exist_genre = Genre.query.get(body.get('genre_id'))
-                if exist_genre is None:
-                    status_code=409
-                    raise Exception
-                movies.genre_id = body.get('genre_id')
-            response['success'] = True
-            response['movies'] = movies.format()
-            movies.update()
-        except Exception as e:
-            response['success'] = False
-            print(e)
-            abort(status_code)
-        return jsonify(response)
-    #Is_Favorite
     @app.route('/users/<user_id>/favorites', methods=['GET'])
     def get_favorites(user_id):
         favorites = Is_Favorite.query.filter_by(user_id=user_id).all()
@@ -317,6 +150,8 @@ def create_app(test_config=None):
         except Exception as e:
             print(e)
             abort(status_code)
+
+
 
     #----handling errorrs-----
     @app.errorhandler(404)
@@ -376,5 +211,3 @@ def create_app(test_config=None):
             'message': 'forbidden'
         }), 403
     return app
-
-
