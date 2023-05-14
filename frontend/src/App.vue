@@ -8,23 +8,15 @@ import HelloWorld from "./components/HelloWorld.vue";
     <img
       alt="Vue logo"
       class="logo"
-      src="@/assets/logo_app.webp"
+      src="@/assets/um_logo.png"
       width="125"
       height="125"
     />
-
     <div class="wrapper">
       <HelloWorld msg="UTEC Movie" />
-
       <nav>
         <RouterLink to="/">Home</RouterLink>
-<<<<<<< Updated upstream
-        <RouterLink to="/countries">Movies</RouterLink>
-        <RouterLink to="/cities">Cities</RouterLink>
-        <RouterLink to="/capitalsGame">Capitals Game</RouterLink>
-=======
         <RouterLink to="/movies">Movies</RouterLink>
->>>>>>> Stashed changes
       </nav>
     </div>
   </header>
@@ -62,10 +54,7 @@ nav a {
   display: inline-block;
   padding: 0 1rem;
   border-left: 1px solid var(--color-border);
-<<<<<<< Updated upstream
-=======
   color: #00d4ff;
->>>>>>> Stashed changes
 }
 
 nav a:first-of-type {
@@ -98,8 +87,4 @@ nav a:first-of-type {
     margin-top: 1rem;
   }
 }
-<<<<<<< Updated upstream
 </style>
-=======
-</style>
->>>>>>> Stashed changes

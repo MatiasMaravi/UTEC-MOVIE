@@ -11,7 +11,7 @@ export default {
   <div class="greetings">
     <h1>{{ msg }}</h1>
     <h3>
-      Información de todas las películas.
+      Get information about popular movies!
     </h3>
   </div>
 </template>
@@ -20,12 +20,12 @@ export default {
 h1 {
   font-weight: 500;
   font-size: 2.6rem;
-  top: -10px;
   color: #00d4ff;
 }
 
 h3 {
   font-size: 1.2rem;
+  top: 10px;
 }
 
 .greetings h1,
@@ -39,8 +39,4 @@ h3 {
     text-align: left;
   }
 }
-<<<<<<< Updated upstream
 </style>
-=======
-</style>
->>>>>>> Stashed changes

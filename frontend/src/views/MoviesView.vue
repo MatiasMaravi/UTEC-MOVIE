@@ -12,15 +12,17 @@ export default {
     };
   },
   created() {
-    fetch('https://api.themoviedb.org/3/movie/popular?api_key=c648045dfc27706ac42d6ac0ae9bffd1')
-        .then(response => {
-          response.json().then(res => this.popularMovies = res.results);
-        })
-        .catch(err => {
-          console.error(err);
-        })
+    fetch(
+      "https://api.themoviedb.org/3/movie/popular?api_key=c648045dfc27706ac42d6ac0ae9bffd1"
+    )
+      .then((response) => {
+        response.json().then((res) => (this.popularMovies = res.results));
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   },
-  methods: {}
+  methods: {},
 };
 </script>
 <template>
