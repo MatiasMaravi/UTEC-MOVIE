@@ -18,11 +18,11 @@ COPY __init__.py .
 COPY script.sh .
 
 # Establecer las variables de entorno para la conexión con PostgreSQL
-ENV POSTGRES_HOST=127.0.0.1
+ENV POSTGRES_HOST=44.209.15.122
 ENV POSTGRES_PORT=5432
 ENV POSTGRES_USER=postgres
-ENV POSTGRES_PASSWORD=123
-ENV POSTGRES_DB=cloud
+ENV POSTGRES_PASSWORD=utec
+ENV POSTGRES_DB=tienda
 
 # Establecer el comando para ejecutar el microservicio
 CMD [ "sh", "script.sh"]

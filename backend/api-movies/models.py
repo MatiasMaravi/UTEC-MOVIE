@@ -12,7 +12,7 @@ class Config:
     DATABASE_URI = os.getenv('DATABASE_URI')
 
 db = SQLAlchemy()
-database_path="postgresql://postgres:123@127.0.0.1:5432/cloud"
+database_path="postgresql://postgres:N94P1SJh3ZUfzE3ApZCy@cloud.cxbbb0awctld.us-east-1.rds.amazonaws.com:5432/cloud"
 
 #Ejemplo: DATABASE_URI=postgresql://postgres:123@localhost:5432/utecmovie2023
 # por el momento el database name lo trabajaremos en postgres.
@@ -23,53 +23,6 @@ def setup_db(app, database_path=database_path):
     with app.app_context():
         db.init_app(app)
         db.create_all()
-
-class Director(db.Model):
-    __tablename__ = "directors"
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    name = db.Column(db.String, index=True)
-    biography = db.Column(db.String, index=True)
-    birth_date = db.Column(db.String, index=True)
-    def __repr__(self):
-        return f"Director: id:{self.id}, name:{self.name}, biography:{self.biography}, birth_date:{self.birth_date}"
-    def format(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'biography': self.biography,
-            'birth_date': self.birth_date
-        }
-    def insert(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            create_director = self.id
-        except:
-            db.session.rollback()
-        finally:
-            db.session.close()
-        return create_director
-    def update(self):
-        error= False
-        try:
-            print('self: ',self)
-            db.session.commit()
-        except Exception as e:
-            print('error: ',e)
-            error= True
-            db.session.rollback()
-        finally:
-            db.session.close()
-        return error
-    def delete(self):
-        try:
-            db.session.delete(self)
-            db.session.commit()
-        except:
-            db.session.rollback()
-        finally:
-            db.session.close()
-
 class Genre(db.Model):
     __tablename__ = "genres"
     id = db.Column(db.Integer, primary_key=True, index=True)
@@ -114,51 +67,6 @@ class Genre(db.Model):
             db.session.rollback()
         finally:
             db.session.close()
-
-class Actor(db.Model):
-    __tablename__ = "actors"
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    name = db.Column(db.String, index=True)
-    genero = db.Column(db.String, index=True)
-    def __repr__(self):
-        return f"Actor: id:{self.id}, name:{self.name}, genero:{self.genero}"
-    def format(self):{
-            'id': self.id,
-            'name': self.name,
-            'genero': self.genero
-        }
-
-    def insert(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            create_actor = self.id
-        except:
-            db.session.rollback()
-        finally:
-            db.session.close()
-        return create_actor
-    def update(self):
-        error= False
-        try:
-            print('self: ',self)
-            db.session.commit()
-        except Exception as e:
-            print('error: ',e)
-            error= True
-            db.session.rollback()
-        finally:
-            db.session.close()
-        return error
-    def delete(self):
-        try:
-            db.session.delete(self)
-            db.session.commit()
-        except:
-            db.session.rollback()
-        finally:
-            db.session.close()
-
 
 class Movie(db.Model):
     __tablename__ = "movies"
