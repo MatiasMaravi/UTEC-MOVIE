@@ -2,14 +2,14 @@
 
  services:
    api-genres:
-     image: matiasmaravi/api-genres:2.0
+     image: matiasmaravi/api-genres:3.0
      ports:
        - 8002:8002
    api-movies:
-     image: matiasmaravi/api-movies:2.0
+     image: matiasmaravi/api-movies:3.0
      ports:
        - 8003:8003
    api-users:
-     image: matiasmaravi/api-users:2.0
+     image: matiasmaravi/api-users:3.0
      ports:
        - 8004:8004
