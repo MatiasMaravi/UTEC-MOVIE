@@ -1,7 +1,7 @@
 <script>
 export default {
-  name: "HomeView",
-};
+  name: 'HomeView',
+}
 </script>
 
 <template>
