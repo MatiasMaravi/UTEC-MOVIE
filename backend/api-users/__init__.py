@@ -7,7 +7,7 @@ from flask import (
 import jwt
 import datetime
 from flask_cors import CORS
-from models import setup_db, User, Is_Favorite
+from .models import setup_db, User, Is_Favorite
 
 def create_app(test_config=None):
     app = Flask(__name__)

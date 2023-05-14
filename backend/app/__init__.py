@@ -7,7 +7,7 @@ from flask import (
 import jwt
 import datetime
 from flask_cors import CORS
-from models import setup_db, Genre, Movie, Director, User, Is_Favorite
+from m import setup_db, Genre, Movie, Director, User, Is_Favorite
 def create_app(test_config=None):
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'utecuniversity'

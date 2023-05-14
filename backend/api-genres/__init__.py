@@ -4,10 +4,8 @@ from flask import (
     jsonify,
     request,
 )
-import jwt
-import datetime
 from flask_cors import CORS
-from models import setup_db, Genre
+from .models import setup_db, Genre
 def create_app(test_config=None):
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'utecuniversity'
@@ -36,26 +34,40 @@ def create_app(test_config=None):
         body = request.get_json()
         name = body.get('name', None)
         search = body.get('search', None)
+        
         if search:
             generes = Genre.order_by('id').filter(Genre.name.like(f'%{search}%')).all()
             return jsonify({
                 'success': True,
                 'generes': [genere.format() for genere in generes],
-                'total_generes': len(generes)})
+                'total_generes': len(generes)
+            })
         else:
             if 'name' not in body:
                 abort(422)
+            
             response = {}
-            try:
-                genre = Genre(name=name)
-                response['success'] = True
-                genre.id = genre.insert()
-                response['genre'] = genre.format()
-            except Exception as e:
+            
+            # Verificar si el género ya existe en la base de datos
+            existing_genre = Genre.query.filter_by(name=name).first()
+            if existing_genre:
                 response['success'] = False
-                print(e)
-                abort(500)
+                response['message'] = 'El género ya existe.'
+                abort(409)
+            else:
+                try:
+                    genre = Genre(name=name)
+                    response['success'] = True
+                    genre.id = genre.insert()
+                    response['genre'] = genre.format()
+                except Exception as e:
+                    response['success'] = False
+                    response['message'] = 'Error al crear el género.'
+                    print(e)
+                    abort(500)
+            
             return jsonify(response)
+
     @app.route('/genres/<int_id>', methods=['DELETE'])
     def delete_genres(int_id):
         error_404 = False

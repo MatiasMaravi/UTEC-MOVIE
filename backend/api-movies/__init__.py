@@ -5,7 +5,7 @@ from flask import (
     request,
 )
 from flask_cors import CORS
-from models import setup_db, Genre, Movie
+from .models import setup_db, Genre, Movie
 def create_app(test_config=None):
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'utecuniversity'
