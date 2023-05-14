@@ -4,12 +4,12 @@
    api-genres:
      image: matiasmaravi/api-genres:1.0
      ports:
-       - 8081:80
+       - 8081:5000
    api-movies:
      image: matiasmaravi/api-movies:1.0
      ports:
-       - 8082:80
+       - 8082:5000
    api-users:
      image: matiasmaravi/api-users:1.0
      ports:
-       - 8083:80
+       - 8083:5000
