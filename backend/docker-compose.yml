@@ -6,7 +6,7 @@
      ports:
        - 8002:8002
    api-movies:
-     image: matiasmaravi/api-movies:3.0
+     image: matiasmaravi/api-movies:4.0
      ports:
        - 8003:8003
    api-users:

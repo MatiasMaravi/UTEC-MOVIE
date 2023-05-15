@@ -30,6 +30,16 @@ def create_app(test_config=None):
             'movies': [movie.format() for movie in movies],
             'total_movies': total_movies  
         })
+    @app.route('/movies/<int_id>', methods=['GET'])
+    def get_movies_by_id(int_id):
+        movie = Movie.query.get(int_id)
+        if movie is None:
+            abort(404)
+        return jsonify({
+            'success': True,
+            'movies': movie.format()
+        })
+
     @app.route('/movies', methods=['POST'])
     def create_movies():
         body = request.get_json()
