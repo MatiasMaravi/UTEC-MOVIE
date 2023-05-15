@@ -11,8 +11,9 @@ export default {
       },
       year: "",
       genres: [],
-      genre: "",
-      genreId: null,
+      genre_id: null,
+      movie_id: null,
+      favorite: false,
     };
   },
   created() {
@@ -26,16 +27,51 @@ export default {
         this.url = `https://image.tmdb.org/t/p/original${this.movie.poster_path}`;
         this.year = this.movie.release_date.slice(0, 4);
         this.genres = this.movie.genres;
-        this.genre = this.genres[0];
 
-        // Calling the postGenre() method for each genre
-        this.postGenre(genre);
-
-        // Calling the postMovie() method to add each movie
-        this.postMovie();
+        // Llama al método postGenre para el primer género encontrado en la lista de géneros
+        this.postGenre(this.genres[0])
+          .then(() => {
+            // Llama a postMovie después de que se complete postGenre
+            this.postMovie();
+          })
+          .catch((error) => {
+            console.error(error);
+          });
       })
       .catch((error) => {
         console.error(error);
+      });
+    const movieName = this.movie.title;
+    fetch("http://lb-pp-prod-1168650394.us-east-1.elb.amazonaws.com:8003/movies") // Reemplaza "https://ejemplo.com/api/peliculas" con la URL de tu API
+      .then((response) => response.json()) // Convierte la respuesta en formato JSON
+      .then((data) => {
+        console.log("Data: ", data)
+        // Verifica si la respuesta fue exitosa
+        if (data.success) {
+          // Verifica si hay películas en la respuesta
+          if (data.movies && data.movies.length > 0) {
+            // Busca la película por nombre
+            const currentMovie = data.movies.find(
+              (cMovie) => cMovie.title === this.movie.title
+            );
+            console.log("Current movie: ", currentMovie);
+            if (currentMovie) {
+              console.log("Movie ID:", currentMovie.id);
+              console.log("Genre ID:", currentMovie.genre_id);
+              this.movie_id = currentMovie.id;
+              this.genre_id = currentMovie.genre_id;
+            } else {
+              console.log("No se encontró ninguna película con ese nombre.");
+            }
+          } else {
+            console.log("No hay películas en la respuesta.");
+          }
+        } else {
+          console.log("La solicitud no fue exitosa.");
+        }
+      })
+      .catch((error) => {
+        console.error("Ocurrió un error al obtener los datos:", error);
       });
   },
   methods: {
@@ -44,31 +80,34 @@ export default {
         name: genre.name,
       };
 
-      fetch("https://ejemplo.com/api/genres", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(genreData),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log(data);
-          if (!this.firstGenreId) {
-            this.firstGenreId = data.id;
-          }
+      return new Promise((resolve, reject) => {
+        fetch("http://lb-pp-prod-1168650394.us-east-1.elb.amazonaws.com:8002/genres", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(genreData),
         })
-        .catch((error) => {
-          console.error(error);
-        });
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Genre posted");
+            console.log(data);
+            if (!this.genre_id) {
+              this.genre_id = data.genre.id;
+              resolve(); // Resuelve la promesa después de asignar el genre_id
+            }
+          })
+          .catch((error) => {
+            reject(error); // Rechaza la promesa si ocurre un error
+          });
+      });
     },
     postMovie() {
       const movieData = {
         title: this.movie.title,
-        genre_id: this.genreId,
+        genre_id: this.genre_id,
       };
-
-      fetch("https://ejemplo.com/api/movies", {
+      fetch("http://lb-pp-prod-1168650394.us-east-1.elb.amazonaws.com:8003/movies", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -77,11 +116,63 @@ export default {
       })
         .then((response) => response.json())
         .then((data) => {
-          console.log(data);
+          console.log("Movie posted");
+          this.movie_id = data.movies.id;
+          console.log(data.movies.id);
         })
         .catch((error) => {
           console.error(error);
         });
+    },
+    async addFavorite() {
+      try {
+        console.log("Movie");
+        console.log(this.movie_id);
+        const response = await fetch(
+          `http://lb-pp-prod-1168650394.us-east-1.elb.amazonaws.com:8004/users/${this.$root.userId}/favorites`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              movie_id: this.movie_id,
+            }),
+          }
+        );
+
+        if (response.ok) {
+          console.log("Película agregada a favoritos");
+        } else {
+          console.error("Error al agregar la película a favoritos");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    async deleteFavorite() {
+      try {
+        const response = await fetch(
+          `http://lb-pp-prod-1168650394.us-east-1.elb.amazonaws.com:8004/users/${this.$root.userId}/favorites/${this.movie_id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              movie_id: this.movie_id,
+            }),
+          }
+        );
+
+        if (response.ok) {
+          console.log("Película eliminada de favoritos");
+        } else {
+          console.error("Error al eliminar la película de favoritos");
+        }
+      } catch (error) {
+        console.error(error);
+      }
     },
   },
 };
@@ -107,6 +198,19 @@ export default {
       </div>
       <h3>Plot:</h3>
       <div class="summary">{{ movie.overview }}</div>
+      <div class="button-container" v-if="$root.userId">
+        <button class="addFavorite-button" @click="addFavorite">
+          Add to your favorites
+        </button>
+      </div>
+      <div class="button-container" v-if="$root.userId">
+        <button class="addFavorite-button" @click="deleteFavorite">
+          Delete from your favorites
+        </button>
+      </div>
+      <div v-else>
+        <h2>Sign in to add your favorite movies!</h2>
+      </div>
     </div>
   </div>
 </template>
@@ -120,7 +224,7 @@ export default {
 }
 
 .poster {
-  width: 300px;
+  width: 310px;
 }
 
 .genre {
@@ -130,7 +234,7 @@ export default {
 
 .genre div {
   border: 2px solid #686868;
-  font-size: 1.5em;
+  font-size: 1.25em;
   padding: 0.4em 0.4em;
   border-radius: 0.4em;
   font-weight: 500;
@@ -140,7 +244,7 @@ export default {
 .details {
   display: flex;
   justify-content: space-evenly;
-  font-size: 1.5em;
+  font-size: 1.25em;
   color: #a0a0a0;
   margin: 0.6em 5em;
   font-weight: 300;
@@ -151,6 +255,15 @@ h1 {
   font-size: 4em;
   font-weight: bold;
   line-height: 1em;
+  color: #00d4ff;
+}
+
+h2 {
+  text-align: center;
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 1em;
+  margin-top: 1em;
   color: #00d4ff;
 }
 
@@ -189,6 +302,33 @@ h3 {
   display: inline-block;
   font-size: 1.5em;
   font-weight: 500;
+}
+
+.button-container {
+  margin-top: 10px;
+}
+
+button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 0.4em;
+  font-weight: bolder;
+  background-color: #00d4ff;
+  color: white;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #00a7cc;
+}
+
+.addFavorite-button {
+  width: 100%;
+  max-width: 300px; /* Ajusta el valor según el ancho deseado */
+  margin: 0 auto; /* Centra horizontalmente el botón */
 }
 
 @media (min-width: 1024px) {

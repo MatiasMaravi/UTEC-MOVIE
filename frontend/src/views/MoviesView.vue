@@ -26,8 +26,7 @@ export default {
 };
 </script>
 <template>
-  <div class="countries-container">
-    <!--//TODO: pasar una propiedad para determinar si al componente se le puede hacer click -->
+  <div class="movies-container">
     <MovieComponent
       v-for="(movie, index) in popularMovies"
       :key="index"
@@ -43,16 +42,11 @@ export default {
 
 <style scoped>
 @media (min-width: 1024px) {
-  .countries {
-    display: flex;
-    align-items: center;
-  }
-
   input {
     line-height: 2em;
   }
 
-  .countries-container {
+  .movies-container {
     text-align: center;
     overflow-y: auto;
     vertical-align: middle;
